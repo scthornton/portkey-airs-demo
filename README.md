@@ -34,8 +34,8 @@ Two processes run locally:
 
 1. **Clone and install:**
    ```bash
-   git clone <repo-url>
-   cd portkey-demo
+   git clone https://github.com/scthornton/portkey-airs-demo.git
+   cd portkey-airs-demo
    npm install
    ```
 

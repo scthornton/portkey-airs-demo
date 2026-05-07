@@ -36,8 +36,6 @@ export async function POST(req: Request) {
     );
   }
 
-  console.log("[API] provider:", providerKey, "guardrails:", guardrailsEnabled, "body keys:", Object.keys(body));
-
   const portkeyConfig = buildPortkeyConfig({
     guardrailsEnabled,
     airsApiKey: process.env.PRISMA_AIRS_API_KEY,
