@@ -5,6 +5,14 @@ DEMO_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$DEMO_DIR"
 
 CONTAINER_NAME="portkey-gateway-demo"
+USE_NGROK=false
+
+# Parse flags
+for arg in "$@"; do
+    case $arg in
+        --ngrok) USE_NGROK=true ;;
+    esac
+done
 
 cleanup() {
     echo ""
@@ -12,6 +20,9 @@ cleanup() {
     docker stop "$CONTAINER_NAME" 2>/dev/null || true
     if [ -n "$NEXT_PID" ]; then
         kill "$NEXT_PID" 2>/dev/null || true
+    fi
+    if [ -n "$NGROK_PID" ]; then
+        kill "$NGROK_PID" 2>/dev/null || true
     fi
     exit 0
 }
@@ -78,14 +89,68 @@ echo "[2/2] Starting Next.js dev server on port 3000..."
 npm run dev &
 NEXT_PID=$!
 
+# Wait for Next.js
+for i in $(seq 1 30); do
+    if curl -s http://localhost:3000 > /dev/null 2>&1; then
+        break
+    fi
+    sleep 1
+done
+
 echo ""
 echo "========================================"
 echo "  Demo is running!"
 echo ""
 echo "  Chat UI:         http://localhost:3000"
 echo "  Gateway Console: http://localhost:8787/public/"
+echo "  API Endpoint:    http://localhost:3000/api/v1/chat/completions"
+
+# Start ngrok if requested
+if [ "$USE_NGROK" = true ]; then
+    if ! command -v ngrok &> /dev/null; then
+        echo ""
+        echo "  WARNING: ngrok not found. Install from https://ngrok.com"
+        echo "========================================"
+    else
+        echo ""
+        echo "  Starting ngrok tunnel..."
+        ngrok http 3000 --log=stdout > /tmp/ngrok-portkey.log 2>&1 &
+        NGROK_PID=$!
+
+        # Wait for ngrok to establish the tunnel
+        NGROK_URL=""
+        for i in $(seq 1 15); do
+            NGROK_URL=$(curl -s http://localhost:4040/api/tunnels 2>/dev/null | python3 -c "import sys,json; t=json.load(sys.stdin).get('tunnels',[]); print(t[0]['public_url'] if t else '')" 2>/dev/null)
+            if [ -n "$NGROK_URL" ]; then
+                break
+            fi
+            sleep 1
+        done
+
+        if [ -n "$NGROK_URL" ]; then
+            echo ""
+            echo "  ----------------------------------------"
+            echo "  NGROK TUNNEL ACTIVE"
+            echo ""
+            echo "  Public URL:      $NGROK_URL"
+            echo "  Red Team Target: $NGROK_URL/api/v1/chat/completions"
+            echo "  ----------------------------------------"
+            echo ""
+            echo "  Use this URL as the target in Strata Cloud Manager:"
+            echo "  AI Runtime Security > Red Teaming > Targets > New Target"
+            echo "    Type:   API Endpoint"
+            echo "    URL:    $NGROK_URL/api/v1/chat/completions"
+            echo "    Format: OpenAI Chat Completions"
+        else
+            echo ""
+            echo "  WARNING: ngrok started but tunnel URL not detected."
+            echo "  Check: http://localhost:4040"
+        fi
+    fi
+fi
+
 echo "========================================"
 echo ""
-echo "Press Ctrl+C to stop both servers."
+echo "Press Ctrl+C to stop all services."
 
 wait

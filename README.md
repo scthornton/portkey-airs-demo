@@ -82,6 +82,59 @@ Two processes run locally:
 5. **Toggle comparison** - Turn guardrails OFF, send the same attack, show it passes through unprotected
 6. **Gateway console** - Open `:8787/public/` to show all logged requests with status codes
 
+## AIRS Red Teaming
+
+This app exposes an OpenAI-compatible API endpoint that can be used as a target for Prisma AIRS Red Teaming scans.
+
+### Start with ngrok tunnel
+
+```bash
+./start.sh --ngrok
+```
+
+This starts the app and creates a public ngrok tunnel. The output will show:
+
+```
+NGROK TUNNEL ACTIVE
+
+Public URL:      https://abc123.ngrok-free.app
+Red Team Target: https://abc123.ngrok-free.app/api/v1/chat/completions
+```
+
+### Set up the target in Strata Cloud Manager
+
+1. Go to **AI Runtime Security > Red Teaming > Targets**
+2. Click **Add Target**
+3. Configure:
+   - **Type:** API Endpoint
+   - **URL:** `https://<your-ngrok-url>/api/v1/chat/completions`
+   - **Format:** OpenAI Chat Completions
+   - No authentication headers needed (the app handles keys server-side)
+
+### Run a scan
+
+1. Go to **Scans > New Scan**
+2. Select **DYNAMIC** scan type
+3. Pick your target
+4. Choose attack categories (prompt injection, jailbreak, DLP, toxic content, etc.)
+5. Run the scan
+
+The endpoint routes all traffic through the Portkey gateway with AIRS guardrails enabled. The scan results in SCM will show which attacks AIRS blocked and which got through.
+
+### API endpoint details
+
+```
+POST /api/v1/chat/completions
+Content-Type: application/json
+
+{
+  "messages": [{"role": "user", "content": "your prompt here"}],
+  "max_tokens": 1024
+}
+```
+
+Returns standard OpenAI chat completion format. AIRS blocks return HTTP 446 with guardrail verdicts in the response body.
+
 ## Tech Stack
 
 - [Next.js 15](https://nextjs.org/) (App Router)
