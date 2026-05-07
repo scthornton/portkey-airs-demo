@@ -59,13 +59,21 @@ export default function Home() {
   const [guardrailsEnabled, setGuardrailsEnabled] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const providerRef = useRef(provider);
+  const guardrailsRef = useRef(guardrailsEnabled);
+  providerRef.current = provider;
+  guardrailsRef.current = guardrailsEnabled;
+
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: "/api/chat",
-        body: { provider, guardrailsEnabled },
+        body: () => ({
+          provider: providerRef.current,
+          guardrailsEnabled: guardrailsRef.current,
+        }),
       }),
-    [provider, guardrailsEnabled]
+    []
   );
 
   const { messages, sendMessage, status, setMessages } = useChat({
