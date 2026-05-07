@@ -84,9 +84,9 @@ Two processes run locally:
 
 ## AIRS Red Teaming
 
-This app exposes an OpenAI-compatible API endpoint that can be used as a target for Prisma AIRS Red Teaming scans.
+This app exposes an OpenAI-compatible API endpoint that can be used as a target for Prisma AIRS AI Red Teaming scans.
 
-### Start with ngrok tunnel
+### 1. Start with ngrok tunnel
 
 ```bash
 ./start.sh --ngrok
@@ -97,29 +97,49 @@ This starts the app and creates a public ngrok tunnel. The output will show:
 ```
 NGROK TUNNEL ACTIVE
 
-Public URL:      https://abc123.ngrok-free.app
-Red Team Target: https://abc123.ngrok-free.app/api/v1/chat/completions
+Public URL:      https://abc123.ngrok-free.dev
+Red Team Target: https://abc123.ngrok-free.dev/api/v1/chat/completions
 ```
 
-### Set up the target in Strata Cloud Manager
+### 2. Add a target in Strata Cloud Manager
 
-1. Go to **AI Runtime Security > Red Teaming > Targets**
-2. Click **Add Target**
-3. Configure:
-   - **Type:** API Endpoint
-   - **URL:** `https://<your-ngrok-url>/api/v1/chat/completions`
-   - **Format:** OpenAI Chat Completions
-   - No authentication headers needed (the app handles keys server-side)
+1. Log in to [Strata Cloud Manager](https://stratacloudmanager.paloaltonetworks.com/)
+2. Navigate to **AI Security > AI Red Teaming > Targets**
+3. Click **+ New Target**
+4. Fill in **Target Details**:
+   - **Target Name:** `Portkey AIRS Demo`
+   - **Target Type:** Application
+5. Set **Connection Method** to **REST API or Streaming**
+6. Set **Endpoint Accessibility** to **Public**
+7. Click **Next: Choose Method**
+8. Select **Import from cURL** and paste:
+   ```bash
+   curl -X POST https://<your-ngrok-url>/api/v1/chat/completions \
+     -H "Content-Type: application/json" \
+     -d '{"messages": [{"role": "user", "content": "{INPUT}"}], "max_tokens": 1024}'
+   ```
+   The `{INPUT}` placeholder is where AI Red Teaming injects attack prompts during scans.
+9. Click **Import** - SCM extracts the endpoint URL, method, headers, and body template
+10. On the **Verify & Edit JSON** page, confirm the request body looks correct
+11. On **Advanced Configurations**, set the **Guardrails/Content Filters** error code to `446` (the code AIRS returns for blocked requests)
+12. Click **Save** to create the target
 
-### Run a scan
+No authentication headers are needed in the cURL - the app handles provider API keys server-side.
 
-1. Go to **Scans > New Scan**
-2. Select **DYNAMIC** scan type
-3. Pick your target
-4. Choose attack categories (prompt injection, jailbreak, DLP, toxic content, etc.)
-5. Run the scan
+### 3. Run a scan
 
-The endpoint routes all traffic through the Portkey gateway with AIRS guardrails enabled. The scan results in SCM will show which attacks AIRS blocked and which got through.
+1. Navigate to **AI Security > AI Red Teaming > Scans**
+2. Click **+ New Scan** (or **Start Scan**)
+3. Select your target
+4. Choose a scan type:
+   - **Attack Library** - curated set of known attack techniques across security, safety, and compliance categories (prompt injection, jailbreak, system prompt leak, data exfiltration, harmful content). Good for a first scan.
+   - **Agent (Automated)** - LLM-based attacker that generates and adapts attacks in real time. Black-box testing with configurable depth and parallel agent count.
+   - **Agent (Human Augmented)** - supply context like the system prompt and specific attack goals for targeted grey-box/white-box testing.
+   - **Custom** - run your own prompt sets alongside the built-in library.
+5. For Attack Library scans, select specific attack categories or run the full library
+6. Start the scan and monitor progress in the dashboard
+
+Scan results include a Risk Score (0-100), findings by severity (Critical/High/Medium/Low), and per-attack breakdowns. Since the endpoint routes traffic through the Portkey gateway with AIRS guardrails enabled, the results show which attacks AIRS blocked vs. which got through.
 
 ### API endpoint details
 
@@ -133,7 +153,7 @@ Content-Type: application/json
 }
 ```
 
-Returns standard OpenAI chat completion format. AIRS blocks return HTTP 446 with guardrail verdicts in the response body.
+Returns standard OpenAI chat completion format. AIRS-blocked requests return HTTP 446 with guardrail verdicts in the response body including detection categories and scan IDs.
 
 ## Tech Stack
 
