@@ -26,18 +26,25 @@ export function buildPortkeyConfig(options: {
   guardrailsEnabled: boolean;
   airsApiKey?: string;
   profileName?: string;
+  aiModel?: string;
 }) {
   const config: Record<string, unknown> = {};
 
   if (options.guardrailsEnabled && options.airsApiKey) {
+    const intercept: Record<string, unknown> = {
+      profile_name: options.profileName || "chatbot",
+      credentials: {
+        AIRS_API_KEY: options.airsApiKey,
+      },
+    };
+
+    if (options.aiModel) {
+      intercept.ai_model = options.aiModel;
+    }
+
     const guardrail = {
       deny: true,
-      "panw-prisma-airs.intercept": {
-        profile_name: options.profileName || "chatbot",
-        credentials: {
-          AIRS_API_KEY: options.airsApiKey,
-        },
-      },
+      "panw-prisma-airs.intercept": intercept,
     };
 
     config.input_guardrails = [guardrail];

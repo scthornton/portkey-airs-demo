@@ -18,6 +18,7 @@ export async function POST(req: Request) {
     guardrailsEnabled: true,
     airsApiKey: process.env.PRISMA_AIRS_API_KEY,
     profileName: process.env.PRISMA_AIRS_PROFILE_NAME,
+    aiModel: body.model || providerConfig.model,
   });
 
   const gatewayUrl =
