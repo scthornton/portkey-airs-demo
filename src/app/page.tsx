@@ -98,17 +98,21 @@ export default function Home() {
     <div className="flex h-full flex-col">
       {/* Header */}
       <header className="flex items-center justify-between border-b border-zinc-800 bg-zinc-900/80 px-6 py-3 backdrop-blur">
-        <div className="flex items-center gap-3">
+        <button
+          onClick={() => setMessages([])}
+          className="flex items-center gap-3 transition-opacity hover:opacity-80"
+          title="Back to home"
+        >
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f04e23]">
             <span className="text-sm font-bold text-white">P</span>
           </div>
-          <div>
+          <div className="text-left">
             <h1 className="text-sm font-semibold text-zinc-100">
               Portkey AI Gateway
             </h1>
             <p className="text-xs text-zinc-500">Prisma AIRS Security Demo</p>
           </div>
-        </div>
+        </button>
         <div className="flex items-center gap-4">
           <select
             value={provider}
