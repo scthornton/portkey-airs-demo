@@ -8,6 +8,9 @@ Interactive demo app showcasing the [Portkey AI Gateway](https://github.com/port
 ### AIRS guardrail blocking prompt injection in real time
 ![Guardrail blocked](docs/02-guardrail-blocked.png)
 
+### Portkey Gateway Console - real-time logs showing allow (200) and block (446)
+![Gateway Console Logs](docs/04-gateway-console-logs.png)
+
 ### Session logged in Strata Cloud Manager
 ![Strata Cloud Manager](docs/03-strata-cloud-manager.png)
 
