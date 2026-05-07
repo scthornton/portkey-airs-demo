@@ -57,8 +57,6 @@ function parseAirsError(errorText: string): AirsVerdictInfo | null {
 export default function Home() {
   const [provider, setProvider] = useState<Provider>("anthropic");
   const [guardrailsEnabled, setGuardrailsEnabled] = useState(false);
-  const [guardrailError, setGuardrailError] = useState<string | null>(null);
-  const [airsVerdict, setAirsVerdict] = useState<AirsVerdictInfo | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const transport = useMemo(
@@ -72,16 +70,6 @@ export default function Home() {
 
   const { messages, sendMessage, status, setMessages } = useChat({
     transport,
-    onError: (err) => {
-      const msg = err.message || "";
-      if (msg.includes("AIRS") || msg.includes("guardrail") || msg.includes("446")) {
-        setGuardrailError(msg);
-        const verdict = parseAirsError(msg);
-        if (verdict) setAirsVerdict(verdict);
-      } else {
-        setGuardrailError(msg);
-      }
-    },
   });
 
   const scrollToBottom = useCallback(() => {
@@ -90,13 +78,11 @@ export default function Home() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, guardrailError, scrollToBottom]);
+  }, [messages, scrollToBottom]);
 
   const isStreaming = status === "streaming";
 
   const handleSend = (text: string) => {
-    setGuardrailError(null);
-    setAirsVerdict(null);
     sendMessage({ text });
   };
 
@@ -161,7 +147,7 @@ export default function Home() {
       {/* Chat Area */}
       <main className="flex-1 overflow-y-auto px-4 py-6">
         <div className="mx-auto max-w-3xl space-y-4">
-          {messages.length === 0 && !guardrailError ? (
+          {messages.length === 0 ? (
             <EmptyState
               onSend={handleSend}
               guardrailsEnabled={guardrailsEnabled}
@@ -172,13 +158,6 @@ export default function Home() {
                 <MessageBubble key={msg.id} message={msg} />
               ))}
             </>
-          )}
-
-          {guardrailError && (
-            <GuardrailAlert
-              errorText={guardrailError}
-              verdict={airsVerdict}
-            />
           )}
 
           {isStreaming && (
@@ -197,8 +176,6 @@ export default function Home() {
         isStreaming={isStreaming}
         onClear={() => {
           setMessages([]);
-          setGuardrailError(null);
-          setAirsVerdict(null);
         }}
       />
 
@@ -366,6 +343,16 @@ function MessageBubble({ message }: { message: UIMessageDisplay }) {
       .join("") ||
     message.content ||
     "";
+
+  if (!isUser && text.startsWith("AIRS_BLOCKED:")) {
+    const verdict = parseAirsError(text.slice("AIRS_BLOCKED:".length));
+    return (
+      <GuardrailAlert
+        errorText="Request blocked by Prisma AIRS"
+        verdict={verdict}
+      />
+    );
+  }
 
   return (
     <div

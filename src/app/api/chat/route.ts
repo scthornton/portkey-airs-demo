@@ -82,15 +82,12 @@ export async function POST(req: Request) {
   if (!gatewayResponse.ok) {
     const errorBody = await gatewayResponse.text();
     const statusCode = gatewayResponse.status;
-    return new Response(
-      uiStream(
-        null,
-        statusCode === 446
-          ? `AIRS GUARDRAIL BLOCKED: Request denied by Prisma AIRS security scan. ${errorBody}`
-          : `Gateway error (${statusCode}): ${errorBody}`
-      ),
-      { headers: SSE_HEADERS }
-    );
+    // Send blocks as text content so the UI always receives them
+    const message =
+      statusCode === 446
+        ? `AIRS_BLOCKED:${errorBody}`
+        : `Gateway error (${statusCode}): ${errorBody}`;
+    return new Response(uiStream(message, null), { headers: SSE_HEADERS });
   }
 
   if (!gatewayResponse.body) {
