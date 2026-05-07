@@ -2,6 +2,15 @@
 
 Interactive demo app showcasing the [Portkey AI Gateway](https://github.com/portkey-ai/gateway) with [Palo Alto Networks Prisma AIRS](https://www.paloaltonetworks.com/prisma/airs) guardrails for real-time AI security scanning.
 
+### Chat UI with demo prompt cards
+![Landing page](docs/01-landing.png)
+
+### AIRS guardrail blocking prompt injection in real time
+![Guardrail blocked](docs/02-guardrail-blocked.png)
+
+### Session logged in Strata Cloud Manager
+![Strata Cloud Manager](docs/03-strata-cloud-manager.png)
+
 ## What This Demo Shows
 
 - **AI Chat through Portkey Gateway** - Chat with LLMs routed through the Portkey AI Gateway proxy
