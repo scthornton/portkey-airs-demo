@@ -129,6 +129,8 @@ Red Team Target: https://abc123.ngrok-free.dev/api/v1/chat/completions
 
 No authentication headers are needed in the cURL - the app handles provider API keys server-side.
 
+/api/v1/chat/completions defaults to OpenAI and Guardrails enabled
+
 ### 3. Run a scan
 
 1. Navigate to **AI Security > AI Red Teaming > Scans**
